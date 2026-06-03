@@ -3,7 +3,7 @@
 #  Flask로 만든 AI 기반 관계/답변 예측 웹앱
 # ─────────────────────────────────────────────────────────
 
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 import json
 import os
 import anthropic
@@ -13,6 +13,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
+# 세션 암호화에 사용하는 키 (반드시 설정해야 session이 동작함)
+app.secret_key = os.getenv('SECRET_KEY', 'fallback-dev-key')
 
 @app.template_filter('iramyeon')
 def iramyeon_filter(name):
@@ -91,9 +93,32 @@ def index():
                            profile_photo=profile_photo)
 
 
+@app.route('/setup/login', methods=['GET', 'POST'])
+def setup_login():
+    """셋업 로그인 페이지 - 비밀번호 확인 후 셋업 페이지 접근 허용"""
+    if request.method == 'POST':
+        pw = request.form.get('password', '')
+        if pw == os.getenv('SETUP_PASSWORD', '1234'):
+            session['setup_auth'] = True  # 세션에 인증 완료 표시
+            return redirect(url_for('setup'))
+        return render_template('setup_login.html', error='비밀번호가 틀렸어요 🔒')
+    return render_template('setup_login.html', error=None)
+
+
+@app.route('/setup/logout')
+def setup_logout():
+    """셋업 로그아웃 - 세션 삭제 후 홈으로 이동"""
+    session.pop('setup_auth', None)
+    return redirect(url_for('index'))
+
+
 @app.route('/setup', methods=['GET', 'POST'])
 def setup():
     """셋업 페이지 - 앱 주인이 자신의 정보를 입력하고 저장하는 페이지"""
+    # 세션에 인증 정보가 없으면 로그인 페이지로 이동
+    if not session.get('setup_auth'):
+        return redirect(url_for('setup_login'))
+
     if request.method == 'POST':
         existing = load_profile()
         profile = {

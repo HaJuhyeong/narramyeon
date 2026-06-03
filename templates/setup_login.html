@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>셋업 잠금 - 나라면? 🌸</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: linear-gradient(160deg, #fff5f8 0%, #ffe8f0 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 28px;
+      padding: 40px 32px;
+      box-shadow: 0 4px 24px rgba(255, 107, 157, 0.13);
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+    }
+
+    .lock-icon { font-size: 3rem; margin-bottom: 16px; }
+
+    h1 {
+      font-size: 1.3rem;
+      color: #333;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      font-size: 0.85rem;
+      color: #bbb;
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    /* 비밀번호 입력창 */
+    .pw-input {
+      width: 100%;
+      padding: 14px 18px;
+      border: 1.5px solid #ffd6e4;
+      border-radius: 16px;
+      font-size: 1.1rem;
+      font-family: 'Noto Sans KR', sans-serif;
+      color: #333;
+      text-align: center;
+      letter-spacing: 4px;
+      outline: none;
+      transition: border-color 0.2s;
+      margin-bottom: 14px;
+    }
+    .pw-input:focus { border-color: #ff6b9d; }
+    .pw-input.error-shake {
+      border-color: #ff4d4d;
+      animation: shake 0.3s ease;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25%       { transform: translateX(-6px); }
+      75%       { transform: translateX(6px); }
+    }
+
+    /* 에러 메시지 */
+    .error-msg {
+      background: #fff3f3;
+      border: 1px solid #ffb3b3;
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-size: 0.85rem;
+      color: #cc4444;
+      margin-bottom: 14px;
+    }
+
+    /* 확인 버튼 */
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #ff6b9d, #ff91b5);
+      color: white;
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: 'Noto Sans KR', sans-serif;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 14px rgba(255, 107, 157, 0.28);
+    }
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 7px 20px rgba(255, 107, 157, 0.38);
+    }
+
+    /* 홈으로 링크 */
+    .home-link {
+      display: block;
+      margin-top: 20px;
+      font-size: 0.82rem;
+      color: #ccc;
+      text-decoration: none;
+    }
+    .home-link:hover { color: #ff6b9d; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="lock-icon">🔒</div>
+    <h1>앱 주인 전용 페이지</h1>
+    <p class="subtitle">셋업 페이지는 앱 주인만 접근할 수 있어요.<br>비밀번호를 입력해주세요!</p>
+
+    <form method="POST" action="/setup/login">
+
+      <!-- 에러 메시지 (비밀번호 틀렸을 때) -->
+      {% if error %}
+      <div class="error-msg">{{ error }}</div>
+      {% endif %}
+
+      <input
+        type="password"
+        name="password"
+        class="pw-input {% if error %}error-shake{% endif %}"
+        placeholder="비밀번호"
+        autofocus
+      />
+
+      <button type="submit" class="submit-btn">입장하기 🌸</button>
+    </form>
+
+    <a href="/" class="home-link">← 홈으로 돌아가기</a>
+  </div>
+
+</body>
+</html>
