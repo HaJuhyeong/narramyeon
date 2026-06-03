@@ -6,6 +6,8 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 import json
 import os
+import base64
+import httpx
 import anthropic
 from dotenv import load_dotenv
 
@@ -23,8 +25,14 @@ def iramyeon_filter(name):
     code = ord(name[-1]) - 0xAC00
     return '이라면' if 0 <= code <= 11171 and code % 28 != 0 else '라면'
 
-# 프로필 데이터를 저장할 JSON 파일 경로
+# 프로필 데이터를 저장할 로컬 JSON 파일 경로
 PROFILE_FILE = 'user_profile.json'
+
+# ── GitHub 동기화 설정 ──
+GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')                            # Personal Access Token
+GITHUB_REPO  = os.getenv('GITHUB_REPO', 'HaJuhyeong/narramyeon')  # owner/repo
+GITHUB_PATH  = 'user_profile.json'
+GITHUB_API   = f'https://api.github.com/repos/{GITHUB_REPO}/contents/{GITHUB_PATH}'
 
 UPLOAD_FOLDER = os.path.join('static', 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -35,21 +43,83 @@ def allowed_file(filename):
 
 
 # ──────────────────────────────
-# 헬퍼 함수: 프로필 읽기/쓰기
+# 헬퍼 함수: 프로필 읽기/쓰기 (로컬 + GitHub 동기화)
 # ──────────────────────────────
 
-def load_profile():
-    """저장된 프로필 파일을 읽어 딕셔너리로 반환. 없으면 None."""
-    if os.path.exists(PROFILE_FILE):
-        with open(PROFILE_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
+def _github_headers():
+    return {
+        'Authorization': f'token {GITHUB_TOKEN}',
+        'Accept': 'application/vnd.github.v3+json',
+    }
+
+
+def _fetch_profile_from_github():
+    """GitHub 저장소에서 user_profile.json을 읽어 딕셔너리로 반환."""
+    if not GITHUB_TOKEN:
+        return None
+    try:
+        res = httpx.get(GITHUB_API, headers=_github_headers(), timeout=10)
+        if res.status_code == 200:
+            raw = base64.b64decode(res.json()['content']).decode('utf-8')
+            return json.loads(raw)
+    except Exception as e:
+        print(f'GitHub 프로필 읽기 실패: {e}')
     return None
 
 
-def save_profile(profile):
-    """프로필 딕셔너리를 JSON 파일로 저장."""
+def _push_profile_to_github(profile):
+    """프로필 딕셔너리를 GitHub 저장소에 커밋."""
+    if not GITHUB_TOKEN:
+        return
+    try:
+        # 기존 파일의 SHA 조회 (수정 커밋에 필요)
+        res = httpx.get(GITHUB_API, headers=_github_headers(), timeout=10)
+        sha = res.json().get('sha') if res.status_code == 200 else None
+
+        content_b64 = base64.b64encode(
+            json.dumps(profile, ensure_ascii=False, indent=2).encode('utf-8')
+        ).decode('utf-8')
+
+        body = {
+            'message': 'Update profile via narramyeon app',
+            'content': content_b64,
+            'committer': {'name': 'narramyeon-app', 'email': 'app@narramyeon.com'},
+        }
+        if sha:
+            body['sha'] = sha  # 파일 수정 시 기존 SHA 필수
+
+        httpx.put(GITHUB_API, headers=_github_headers(), json=body, timeout=10)
+    except Exception as e:
+        print(f'GitHub 프로필 저장 실패: {e}')
+
+
+def load_profile():
+    """
+    프로필 로딩 순서:
+    1. 로컬 파일 → 있으면 즉시 반환
+    2. 없으면 GitHub에서 가져와서 로컬에 캐시 후 반환
+    """
+    if os.path.exists(PROFILE_FILE):
+        with open(PROFILE_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+
+    # 로컬에 없을 때 (Render 재배포 후 등) GitHub에서 복구
+    profile = _fetch_profile_from_github()
+    if profile:
+        _save_profile_local(profile)  # 로컬에 캐시
+    return profile
+
+
+def _save_profile_local(profile):
+    """로컬 파일에만 저장 (내부 캐시용)."""
     with open(PROFILE_FILE, 'w', encoding='utf-8') as f:
         json.dump(profile, f, ensure_ascii=False, indent=2)
+
+
+def save_profile(profile):
+    """로컬 저장 + GitHub 동기화."""
+    _save_profile_local(profile)
+    _push_profile_to_github(profile)
 
 
 def parse_relationship_response(text):
