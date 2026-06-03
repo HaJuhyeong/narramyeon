@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>관계 예측기 - 나라면? 🌸</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── 기본 ── */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: linear-gradient(160deg, #fff5f8 0%, #ffe8f0 100%);
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    /* ── 상단 바 ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      padding: 20px 20px 0;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    .back-btn {
+      text-decoration: none;
+      color: #ff6b9d;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    /* ── 타이틀 ── */
+    .page-title {
+      text-align: center;
+      padding: 28px 20px 10px;
+    }
+    .page-title h1 { font-size: 1.6rem; color: #ff6b9d; font-weight: 700; }
+    .page-title p  { font-size: 0.85rem; color: #bbb; margin-top: 6px; line-height: 1.5; }
+
+    /* ── 콘텐츠 래퍼 ── */
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 0 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* ── 섹션 카드 ── */
+    .section {
+      background: white;
+      border-radius: 22px;
+      padding: 22px 20px;
+      box-shadow: 0 3px 16px rgba(255, 107, 157, 0.09);
+    }
+    .section-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 14px;
+    }
+
+    /* ── 태그형 체크박스/라디오 ── */
+    .tag-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .tag-group input[type="checkbox"],
+    .tag-group input[type="radio"] { display: none; }
+    .tag-group label {
+      display: inline-block;
+      padding: 7px 16px;
+      border-radius: 20px;
+      border: 1.5px solid #ffd6e4;
+      font-size: 0.85rem;
+      color: #999;
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .tag-group input[type="checkbox"]:checked + label,
+    .tag-group input[type="radio"]:checked + label {
+      background: #ff6b9d;
+      border-color: #ff6b9d;
+      color: white;
+      font-weight: 500;
+    }
+
+    /* ── 예측 버튼 ── */
+    .predict-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #ff6b9d, #ff91b5);
+      color: white;
+      font-size: 1.05rem;
+      font-weight: 700;
+      font-family: 'Noto Sans KR', sans-serif;
+      border: none;
+      border-radius: 18px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 16px rgba(255, 107, 157, 0.30);
+    }
+    .predict-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px rgba(255, 107, 157, 0.40);
+    }
+    .predict-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ── 로딩 스피너 ── */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 30px 0;
+      color: #ff6b9d;
+      font-size: 0.9rem;
+    }
+    .spinner {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      border: 3px solid #ffd6e4;
+      border-top-color: #ff6b9d;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── 결과 카드 ── */
+    .result-card {
+      display: none;
+      background: white;
+      border-radius: 22px;
+      padding: 26px 22px;
+      box-shadow: 0 3px 16px rgba(255, 107, 157, 0.09);
+      text-align: center;
+    }
+
+    /* 관계 유형 뱃지 */
+    .result-type {
+      display: inline-block;
+      background: linear-gradient(135deg, #ff6b9d, #ff91b5);
+      color: white;
+      font-size: 1.3rem;
+      font-weight: 700;
+      padding: 10px 30px;
+      border-radius: 30px;
+      margin-bottom: 16px;
+    }
+
+    /* 점수 바 */
+    .score-wrap {
+      margin: 16px 0;
+    }
+    .score-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      color: #aaa;
+      margin-bottom: 6px;
+    }
+    .score-bar-bg {
+      width: 100%;
+      height: 10px;
+      background: #ffd6e4;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .score-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #ff6b9d, #ffb3cc);
+      border-radius: 10px;
+      transition: width 1s ease;
+      width: 0%;
+    }
+    .score-number {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #ff6b9d;
+      margin: 8px 0;
+    }
+
+    /* 한줄평 */
+    .one-liner {
+      background: #fff0f5;
+      border-radius: 14px;
+      padding: 12px 18px;
+      font-size: 0.92rem;
+      color: #ff6b9d;
+      font-weight: 500;
+      margin: 12px 0;
+      line-height: 1.5;
+    }
+
+    /* 이유 */
+    .reason-text {
+      font-size: 0.87rem;
+      color: #888;
+      line-height: 1.7;
+      text-align: left;
+      padding: 0 4px;
+    }
+
+    /* 다시하기 버튼 */
+    .retry-btn {
+      margin-top: 18px;
+      padding: 10px 28px;
+      background: #fff0f5;
+      color: #ff6b9d;
+      border: none;
+      border-radius: 20px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      font-family: 'Noto Sans KR', sans-serif;
+      cursor: pointer;
+    }
+
+    /* ── 에러 메시지 ── */
+    .error-msg {
+      display: none;
+      background: #fff3f3;
+      border: 1px solid #ffb3b3;
+      border-radius: 14px;
+      padding: 14px 18px;
+      font-size: 0.85rem;
+      color: #cc4444;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 뒤로 가기 -->
+  <div class="topbar">
+    <a href="/" class="back-btn">← 홈으로</a>
+  </div>
+
+  <!-- 타이틀 -->
+  <div class="page-title">
+    <h1>💘 관계 예측기</h1>
+    <p>내 성격·외모·취미를 선택하면<br><strong>{{ profile_name }}</strong>와 어떤 관계가 될지 예측해줄게요!</p>
+  </div>
+
+  <div class="container">
+
+    <!-- 성별 선택 -->
+    <div class="section">
+      <div class="section-title">👤 성별을 선택해주세요 <span style="font-weight:400; font-size:0.82rem; color:#bbb;">(선택사항)</span></div>
+      <div class="tag-group" id="genderGroup">
+        <input type="radio" id="gen_1" name="gender" value="남자" />
+        <label for="gen_1">남자 👦</label>
+        <input type="radio" id="gen_2" name="gender" value="여자" />
+        <label for="gen_2">여자 👧</label>
+      </div>
+    </div>
+
+    <!-- 성격 선택 섹션 -->
+    <div class="section">
+      <div class="section-title">✨ 내 성격을 선택해주세요 <span style="font-weight:400; font-size:0.82rem; color:#bbb;">(여러 개 OK)</span></div>
+      <div class="tag-group" id="personalityGroup">
+        {% set opts = ['외향적인', '내향적인', '감성적인', '이성적인', '즉흥적인', '계획적인', '활발한', '조용한', '유머러스한', '진지한', '다정한', '쿨한', '배려심 많은', '독립적인', '사교적인', '예민한', '털털한', '섬세한', '리더십 있는', '낙천적인', '완벽주의적인', '호기심 많은', '솔직한', '공감능력 높은', '승부욕 있는', '여유로운', '표현력 풍부한'] %}
+        {% for opt in opts %}
+          <input type="checkbox" id="opt_{{ loop.index }}" value="{{ opt }}" />
+          <label for="opt_{{ loop.index }}">{{ opt }}</label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- 외모 선택 섹션 -->
+    <div class="section">
+      <div class="section-title">💅 외모 스타일을 선택해주세요 <span style="font-weight:400; font-size:0.82rem; color:#bbb;">(여러 개 OK)</span></div>
+      <div class="tag-group" id="appearanceGroup">
+        {% set appearances = ['귀여운', '시크한', '청순한', '훈훈한', '개성있는', '보이시한', '걸크러시', '단정한', '건강미 있는', '세련된', '자연스러운', '화려한', '무쌍', '유쌍', '반쌍'] %}
+        {% for opt in appearances %}
+          <input type="checkbox" id="app_{{ loop.index }}" value="{{ opt }}" />
+          <label for="app_{{ loop.index }}">{{ opt }}</label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- 취미 선택 섹션 -->
+    <div class="section">
+      <div class="section-title">🎯 취미를 선택해주세요 <span style="font-weight:400; font-size:0.82rem; color:#bbb;">(여러 개 OK)</span></div>
+      <div class="tag-group" id="hobbiesGroup">
+        {% set hobbies = ['음악 감상', '운동/헬스', '독서', '여행', '게임', '요리/베이킹', '영화/드라마', '카페 탐방', '사진 찍기', '등산/아웃도어', '쇼핑', '그림 그리기', '악기 연주', '댄스/춤', '맛집 탐방', '반려동물', 'SNS/유튜브'] %}
+        {% for opt in hobbies %}
+          <input type="checkbox" id="hob_{{ loop.index }}" value="{{ opt }}" />
+          <label for="hob_{{ loop.index }}">{{ opt }}</label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- 패션 스타일 섹션 -->
+    <div class="section">
+      <div class="section-title">👗 패션 스타일을 선택해주세요 <span style="font-weight:400; font-size:0.82rem; color:#bbb;">(여러 개 OK)</span></div>
+      <div class="tag-group" id="fashionGroup">
+        {% set fashions = ['캐주얼', '스트릿', '미니멀', '러블리/걸리시', '빈티지', '스포티', '포멀/시크', '아메카지', '힙한', '내추럴'] %}
+        {% for opt in fashions %}
+          <input type="checkbox" id="fas_{{ loop.index }}" value="{{ opt }}" />
+          <label for="fas_{{ loop.index }}">{{ opt }}</label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- 동물상 섹션 -->
+    <div class="section">
+      <div class="section-title">🐾 동물상을 선택해주세요 <span style="font-weight:400; font-size:0.82rem; color:#bbb;">(선택사항)</span></div>
+      <div class="tag-group" id="animalGroup">
+        {% set animals = ['강아지상', '고양이상', '늑대상', '곰상', '토끼상', '여우상', '공룡상', '새상', '사슴상'] %}
+        {% for opt in animals %}
+          <input type="radio" id="ani_{{ loop.index }}" name="animal" value="{{ opt }}" />
+          <label for="ani_{{ loop.index }}">{{ opt }}</label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- 예측 버튼 -->
+    <button class="predict-btn" id="predictBtn" onclick="predictRelationship()">
+      🔮 관계 예측하기
+    </button>
+
+    <!-- 로딩 표시 -->
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p>AI가 분석 중이에요...</p>
+    </div>
+
+    <!-- 에러 메시지 -->
+    <div class="error-msg" id="errorMsg"></div>
+
+    <!-- 결과 카드 -->
+    <div class="result-card" id="resultCard">
+      {% if profile_photo %}
+      <img src="{{ url_for('static', filename='uploads/' + profile_photo) }}"
+           style="width:52px;height:52px;border-radius:50%;object-fit:cover;border:2.5px solid #ff6b9d;margin-bottom:10px;" />
+      {% endif %}
+      <p style="font-size:0.82rem; color:#bbb; margin-bottom:12px;">{{ profile_name }}와 나의 관계는...</p>
+      <div class="result-type" id="resultType">-</div>
+
+      <div class="score-wrap">
+        <div class="score-label">
+          <span>궁합 점수</span>
+          <span id="scoreText">-</span>
+        </div>
+        <div class="score-bar-bg">
+          <div class="score-bar-fill" id="scoreBar"></div>
+        </div>
+        <div class="score-number" id="scoreNumber">-</div>
+      </div>
+
+      <div class="one-liner" id="oneLiner"></div>
+      <p class="reason-text" id="reasonText"></p>
+
+      <button class="retry-btn" onclick="resetResult()">🔄 다시 해보기</button>
+    </div>
+
+  </div>
+
+  <script>
+    // 관계 예측 함수
+    async function predictRelationship() {
+      const personality = [...document.querySelectorAll('#personalityGroup input:checked')].map(el => el.value);
+      const appearance  = [...document.querySelectorAll('#appearanceGroup input:checked')].map(el => el.value);
+      const hobbies     = [...document.querySelectorAll('#hobbiesGroup input:checked')].map(el => el.value);
+      const fashion     = [...document.querySelectorAll('#fashionGroup input:checked')].map(el => el.value);
+      const animal      = document.querySelector('#animalGroup input:checked')?.value || '';
+      const gender      = document.querySelector('#genderGroup input:checked')?.value  || '';
+
+      if (personality.length === 0 && appearance.length === 0 && hobbies.length === 0 && fashion.length === 0 && !animal) {
+        alert('하나 이상 선택해주세요! 🌸');
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const res = await fetch('/api/predict-relationship', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ personality, appearance, hobbies, fashion, animal, gender })
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+          showError(data.error);
+          return;
+        }
+
+        // 결과 표시
+        showResult(data);
+
+      } catch (err) {
+        showError('서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    // 결과를 화면에 표시하는 함수
+    function showResult(data) {
+      document.getElementById('resultType').textContent = data.relationship || '-';
+      document.getElementById('oneLiner').textContent = data.one_liner || '';
+      document.getElementById('reasonText').textContent = data.reason || '';
+      document.getElementById('scoreText').textContent = `${data.score}점`;
+      document.getElementById('scoreNumber').textContent = `${data.score}점`;
+
+      // 점수 바 애니메이션 (약간 딜레이 후 적용)
+      setTimeout(() => {
+        document.getElementById('scoreBar').style.width = `${data.score}%`;
+      }, 100);
+
+      document.getElementById('resultCard').style.display = 'block';
+
+      // 결과 카드로 스크롤
+      document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // 에러 표시 함수
+    function showError(msg) {
+      const el = document.getElementById('errorMsg');
+      el.textContent = '⚠️ ' + msg;
+      el.style.display = 'block';
+    }
+
+    // 로딩 상태 전환 함수
+    function setLoading(isLoading) {
+      document.getElementById('loading').style.display = isLoading ? 'block' : 'none';
+      document.getElementById('predictBtn').disabled = isLoading;
+      if (isLoading) {
+        document.getElementById('errorMsg').style.display = 'none';
+        document.getElementById('resultCard').style.display = 'none';
+      }
+    }
+
+    // 초기화 (다시 하기)
+    function resetResult() {
+      document.getElementById('resultCard').style.display = 'none';
+      document.getElementById('scoreBar').style.width = '0%';
+      document.querySelectorAll('#genderGroup input, #personalityGroup input, #appearanceGroup input, #hobbiesGroup input, #fashionGroup input, #animalGroup input').forEach(el => el.checked = false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>나라면? 🌸</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── 기본 리셋 및 공통 설정 ── */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: linear-gradient(160deg, #fff5f8 0%, #ffe8f0 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── 헤더 ── */
+    .header {
+      text-align: center;
+      padding: 56px 24px 24px;
+    }
+    .header-photo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #ff6b9d;
+      box-shadow: 0 4px 16px rgba(255, 107, 157, 0.25);
+      margin-bottom: 14px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .header h1 {
+      font-size: 2.6rem;
+      font-weight: 700;
+      color: #ff6b9d;
+      letter-spacing: -1px;
+    }
+    .header .subtitle {
+      margin-top: 8px;
+      font-size: 0.95rem;
+      color: #bbb;
+    }
+
+    /* ── 카드 리스트 ── */
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding: 8px 20px 40px;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    /* ── 프로필 미설정 경고 배너 ── */
+    .warning-banner {
+      background: #fff8e1;
+      border: 1.5px solid #ffd54f;
+      border-radius: 16px;
+      padding: 14px 18px;
+      font-size: 0.85rem;
+      color: #7a6100;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    /* ── 기능 카드 ── */
+    .card {
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 28px 26px;
+      box-shadow: 0 4px 22px rgba(255, 107, 157, 0.10);
+      text-decoration: none;
+      display: block;
+      transition: transform 0.18s, box-shadow 0.18s;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(255, 107, 157, 0.20);
+    }
+    .card:active { transform: translateY(-2px); }
+
+    .card-emoji { font-size: 2.4rem; margin-bottom: 10px; }
+    .card h2    { font-size: 1.25rem; color: #333; margin-bottom: 6px; }
+    .card p     { font-size: 0.88rem; color: #999; line-height: 1.6; }
+    .card-tag {
+      display: inline-block;
+      margin-top: 14px;
+      background: #fff0f5;
+      color: #ff6b9d;
+      font-size: 0.78rem;
+      font-weight: 500;
+      padding: 4px 14px;
+      border-radius: 20px;
+    }
+
+    /* ── 셋업 배너 ── */
+    .setup-link {
+      background: linear-gradient(135deg, #ff6b9d 0%, #ff91b5 100%);
+      border-radius: 20px;
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      transition: transform 0.18s, box-shadow 0.18s;
+      box-shadow: 0 4px 16px rgba(255, 107, 157, 0.25);
+    }
+    .setup-link:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(255, 107, 157, 0.35);
+    }
+    .setup-link .icon { font-size: 1.6rem; }
+    .setup-link h3 { font-size: 0.98rem; font-weight: 700; color: white; }
+    .setup-link p  { font-size: 0.80rem; color: rgba(255,255,255,0.85); margin-top: 2px; }
+
+    /* ── 푸터 ── */
+    .footer {
+      padding: 20px;
+      font-size: 0.78rem;
+      color: #ddd;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 헤더 -->
+  <div class="header">
+    {% if profile_photo %}
+    <img src="{{ url_for('static', filename='uploads/' + profile_photo) }}" class="header-photo" />
+    {% endif %}
+    <h1>나라면? 🌸</h1>
+    <p class="subtitle">
+      {% if profile_name != '나' %}
+        {{ profile_name }}의 AI 분신
+      {% else %}
+        AI가 예측하는 나의 이야기
+      {% endif %}
+    </p>
+  </div>
+
+  <!-- 카드 영역 -->
+  <div class="cards">
+
+    <!-- 프로필 미설정 시 경고 -->
+    {% if not profile_exists %}
+    <div class="warning-banner">
+      ⚠️ 아직 프로필이 없어요!<br>
+      아래 <strong>셋업 페이지</strong>에서 먼저 정보를 입력해주세요.
+    </div>
+    {% endif %}
+
+    <!-- 기능 1: 관계 예측기 -->
+    <a href="/relationship" class="card">
+      <div class="card-emoji">💘</div>
+      <h2>관계 예측기</h2>
+      <p>
+        내 성격을 선택하면<br>
+        <strong>{{ profile_name }}</strong>와 어떤 관계가 될지 AI가 예측해줘요!
+      </p>
+      <span class="card-tag">절친 / 썸 / 애인 / 동료 …</span>
+    </a>
+
+    <!-- 기능 2: 답변 예측기 -->
+    <a href="/answer" class="card">
+      <div class="card-emoji">💬</div>
+      <h2>{{ profile_name }}{{ profile_name|iramyeon }}?</h2>
+      <p>
+        {{ profile_name }}에게 하고 싶은 말이나 고민을 입력하면<br>
+        AI가 <strong>{{ profile_name }}처럼</strong> 답해줘요!
+      </p>
+      <span class="card-tag">AI 답변 예측</span>
+    </a>
+
+    <!-- 셋업 페이지 링크 (앱 주인 전용) -->
+    <a href="/setup" class="setup-link">
+      <span class="icon">⚙️</span>
+      <div>
+        <h3>앱 주인 전용 셋업</h3>
+        <p>내 성격·말투·가치관을 입력하는 페이지예요</p>
+      </div>
+    </a>
+
+  </div>
+
+  <div class="footer">나라면? 🌸 · AI로 만드는 나의 분신</div>
+
+</body>
+</html>

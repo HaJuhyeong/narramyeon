@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>셋업 - 나라면? 🌸</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── 기본 ── */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: linear-gradient(160deg, #fff5f8 0%, #ffe8f0 100%);
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    /* ── 상단 바 ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      padding: 20px 20px 0;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    .back-btn {
+      text-decoration: none;
+      color: #ff6b9d;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ── 타이틀 ── */
+    .page-title {
+      text-align: center;
+      padding: 28px 20px 10px;
+    }
+    .page-title h1 { font-size: 1.6rem; color: #ff6b9d; font-weight: 700; }
+    .page-title p  { font-size: 0.85rem; color: #bbb; margin-top: 6px; }
+
+    /* ── 폼 컨테이너 ── */
+    form {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 0 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    /* ── 섹션 카드 ── */
+    .section {
+      background: white;
+      border-radius: 22px;
+      padding: 22px 20px;
+      box-shadow: 0 3px 16px rgba(255, 107, 157, 0.09);
+    }
+    .section-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .section-hint {
+      font-size: 0.78rem;
+      color: #bbb;
+      margin-bottom: 12px;
+    }
+
+    /* ── 이름 입력 ── */
+    .name-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid #ffd6e4;
+      border-radius: 14px;
+      font-size: 1rem;
+      font-family: 'Noto Sans KR', sans-serif;
+      color: #333;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .name-input:focus { border-color: #ff6b9d; }
+
+    /* ── 태그형 체크박스/라디오 ── */
+    .tag-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    /* 실제 input은 숨기고, label을 태그처럼 스타일링 */
+    .tag-group input[type="checkbox"],
+    .tag-group input[type="radio"] {
+      display: none;
+    }
+    .tag-group label {
+      display: inline-block;
+      padding: 7px 16px;
+      border-radius: 20px;
+      border: 1.5px solid #ffd6e4;
+      font-size: 0.85rem;
+      color: #999;
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    /* 선택됐을 때 핑크로 채움 */
+    .tag-group input[type="checkbox"]:checked + label,
+    .tag-group input[type="radio"]:checked + label {
+      background: #ff6b9d;
+      border-color: #ff6b9d;
+      color: white;
+      font-weight: 500;
+    }
+
+    /* ── 자유 텍스트 영역 ── */
+    .extra-textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid #ffd6e4;
+      border-radius: 14px;
+      font-size: 0.88rem;
+      font-family: 'Noto Sans KR', sans-serif;
+      color: #333;
+      resize: vertical;
+      min-height: 80px;
+      outline: none;
+      transition: border-color 0.2s;
+      line-height: 1.6;
+    }
+    .extra-textarea:focus { border-color: #ff6b9d; }
+
+    /* ── 저장 버튼 ── */
+    .save-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #ff6b9d, #ff91b5);
+      color: white;
+      font-size: 1.05rem;
+      font-weight: 700;
+      font-family: 'Noto Sans KR', sans-serif;
+      border: none;
+      border-radius: 18px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 16px rgba(255, 107, 157, 0.30);
+    }
+    .save-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px rgba(255, 107, 157, 0.40);
+    }
+    .save-btn:active { transform: translateY(0); }
+
+    /* ── 사진 업로드 ── */
+    .photo-upload-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .photo-circle {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #ffd6e4;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .photo-circle:hover { border-color: #ff6b9d; transform: scale(1.04); }
+    .photo-placeholder {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: #fff0f5;
+      border: 2.5px dashed #ffd6e4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 2rem;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .photo-placeholder:hover { border-color: #ff6b9d; transform: scale(1.04); }
+    .photo-hint { font-size: 0.76rem; color: #bbb; text-align: center; line-height: 1.5; }
+
+    /* ── 저장 완료 토스트 메시지 ── */
+    #toast {
+      display: none;
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: white;
+      padding: 12px 28px;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      z-index: 999;
+      white-space: nowrap;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+  </style>
+</head>
+<body>
+
+  <!-- 뒤로 가기 -->
+  <div class="topbar">
+    <a href="/" class="back-btn">← 홈으로</a>
+  </div>
+
+  <!-- 타이틀 -->
+  <div class="page-title">
+    <h1>⚙️ 셋업</h1>
+    <p>앱 주인만 사용하는 페이지예요. 나에 대한 정보를 입력해주세요!</p>
+  </div>
+
+  <!-- 셋업 폼 -->
+  <form id="setupForm">
+
+    <!-- 프로필 사진 -->
+    <div class="section">
+      <div class="section-title">📸 프로필 사진 <span style="font-weight:400; font-size:0.82rem; color:#bbb;">(선택사항)</span></div>
+      <div class="photo-upload-wrap">
+        {% if profile and profile.photo %}
+          <img id="photoPreview"
+               src="{{ url_for('static', filename='uploads/' + profile.photo) }}"
+               class="photo-circle"
+               onclick="document.getElementById('photoInput').click()" />
+        {% else %}
+          <div class="photo-placeholder" id="photoPlaceholder"
+               onclick="document.getElementById('photoInput').click()">📷</div>
+          <img id="photoPreview" src="" class="photo-circle" style="display:none"
+               onclick="document.getElementById('photoInput').click()" />
+        {% endif %}
+        <input type="file" id="photoInput" name="photo" accept="image/*"
+               style="display:none" onchange="previewPhoto(this)" />
+        <p class="photo-hint">클릭해서 사진을 업로드하세요<br>방문자들에게 보여질 프로필 사진이에요 🌸</p>
+      </div>
+    </div>
+
+    <!-- 이름 -->
+    <div class="section">
+      <div class="section-title">🙋 이름 (또는 닉네임)</div>
+      <input
+        type="text"
+        name="name"
+        class="name-input"
+        placeholder="예: 지현, 현지, 은별 …"
+        value="{{ profile.name if profile else '' }}"
+        maxlength="20"
+      />
+    </div>
+
+    <!-- 성격 (다중 선택) -->
+    <div class="section">
+      <div class="section-title">✨ 내 성격 <span style="font-weight:400; font-size:0.82rem; color:#bbb;">(여러 개 선택 가능)</span></div>
+      <div class="tag-group">
+        {% set personality_options = ['외향적인', '내향적인', '감성적인', '이성적인', '즉흥적인', '계획적인', '활발한', '조용한', '유머러스한', '진지한', '다정한', '쿨한', '배려심 많은', '독립적인', '사교적인', '예민한', '털털한', '섬세한'] %}
+        {% for opt in personality_options %}
+          {% set checked = profile and opt in profile.personality %}
+          <input type="checkbox" name="personality" id="p_{{ loop.index }}" value="{{ opt }}" {% if checked %}checked{% endif %}>
+          <label for="p_{{ loop.index }}">{{ opt }}</label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- 말투 (단일 선택) -->
+    <div class="section">
+      <div class="section-title">💬 내 말투 <span style="font-weight:400; font-size:0.82rem; color:#bbb;">(하나 선택)</span></div>
+      <div class="tag-group">
+        {% set style_options = ['직설적으로 말하는 편', '돌려서 말하는 편', '공감을 잘 해주는 편', '논리적으로 말하는 편', '유머로 말하는 편', '조용하고 신중한 편'] %}
+        {% for opt in style_options %}
+          {% set checked = profile and profile.speaking_style == opt %}
+          <input type="radio" name="speaking_style" id="s_{{ loop.index }}" value="{{ opt }}" {% if checked %}checked{% endif %}>
+          <label for="s_{{ loop.index }}">{{ opt }}</label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- 가치관 (다중 선택) -->
+    <div class="section">
+      <div class="section-title">💎 내 가치관 <span style="font-weight:400; font-size:0.82rem; color:#bbb;">(여러 개 선택 가능)</span></div>
+      <div class="tag-group">
+        {% set value_options = ['가족', '우정', '사랑', '성취/목표', '자유/개성', '안정/평화', '성장/발전', '재미/즐거움', '정직/신뢰', '배려/공감', '도전', '여행/경험'] %}
+        {% for opt in value_options %}
+          {% set checked = profile and opt in profile['values'] %}
+          <input type="checkbox" name="values" id="v_{{ loop.index }}" value="{{ opt }}" {% if checked %}checked{% endif %}>
+          <label for="v_{{ loop.index }}">{{ opt }}</label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- 추가 정보 (자유 입력) -->
+    <div class="section">
+      <div class="section-title">📝 추가로 알려줄 것 <span style="font-weight:400; font-size:0.82rem; color:#bbb;">(선택사항)</span></div>
+      <p class="section-hint">AI가 더 정확하게 예측할 수 있도록 나에 대해 자유롭게 적어주세요.<br>예: 취미, 좋아하는 것, 싫어하는 것 등</p>
+      <textarea
+        name="extra_info"
+        class="extra-textarea"
+        placeholder="예: 나는 INFJ고 고양이를 엄청 좋아해. 갑자기 연락을 끊는 사람은 정말 싫어."
+      >{{ profile.extra_info if profile else '' }}</textarea>
+    </div>
+
+    <!-- 저장 버튼 -->
+    <button type="submit" class="save-btn">🌸 저장하기</button>
+
+  </form>
+
+  <!-- 저장 완료 토스트 -->
+  <div id="toast">✅ 프로필이 저장되었어요!</div>
+
+  <script>
+    function previewPhoto(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const preview = document.getElementById('photoPreview');
+          const placeholder = document.getElementById('photoPlaceholder');
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+          if (placeholder) placeholder.style.display = 'none';
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    // 폼 제출 이벤트 처리 (페이지 이동 없이 AJAX로 저장)
+    document.getElementById('setupForm').addEventListener('submit', async function(e) {
+      e.preventDefault();  // 기본 폼 제출 막기
+
+      const formData = new FormData(this);
+
+      const response = await fetch('/setup', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // 저장 완료 토스트 표시 후 2.5초 뒤 홈으로 이동
+        const toast = document.getElementById('toast');
+        toast.style.display = 'block';
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 2000);
+      }
+    });
+  </script>
+
+</body>
+</html>

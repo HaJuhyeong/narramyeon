@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ profile_name }}{{ profile_name|iramyeon }}? - 나라면? 🌸</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── 기본 ── */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: linear-gradient(160deg, #fff5f8 0%, #ffe8f0 100%);
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    /* ── 상단 바 ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      padding: 20px 20px 0;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    .back-btn {
+      text-decoration: none;
+      color: #ff6b9d;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    /* ── 타이틀 ── */
+    .page-title {
+      text-align: center;
+      padding: 28px 20px 10px;
+    }
+    .page-title h1 { font-size: 1.6rem; color: #ff6b9d; font-weight: 700; }
+    .page-title p  { font-size: 0.85rem; color: #bbb; margin-top: 6px; line-height: 1.5; }
+
+    /* ── 콘텐츠 래퍼 ── */
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 0 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* ── 입력 카드 ── */
+    .section {
+      background: white;
+      border-radius: 22px;
+      padding: 22px 20px;
+      box-shadow: 0 3px 16px rgba(255, 107, 157, 0.09);
+    }
+    .section-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 12px;
+    }
+
+    /* ── 텍스트 영역 ── */
+    .question-input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1.5px solid #ffd6e4;
+      border-radius: 16px;
+      font-size: 0.92rem;
+      font-family: 'Noto Sans KR', sans-serif;
+      color: #333;
+      resize: none;
+      min-height: 120px;
+      outline: none;
+      transition: border-color 0.2s;
+      line-height: 1.7;
+    }
+    .question-input:focus { border-color: #ff6b9d; }
+
+    /* ── 글자 수 카운터 ── */
+    .char-count {
+      text-align: right;
+      font-size: 0.78rem;
+      color: #ccc;
+      margin-top: 6px;
+    }
+
+    /* ── 예시 버튼들 ── */
+    .example-title {
+      font-size: 0.8rem;
+      color: #bbb;
+      margin-top: 12px;
+      margin-bottom: 8px;
+    }
+    .examples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+    .example-btn {
+      padding: 6px 14px;
+      background: #fff0f5;
+      color: #ff6b9d;
+      border: 1px solid #ffd6e4;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-family: 'Noto Sans KR', sans-serif;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .example-btn:hover { background: #ffe0ec; }
+
+    /* ── 예측 버튼 ── */
+    .predict-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #ff6b9d, #ff91b5);
+      color: white;
+      font-size: 1.05rem;
+      font-weight: 700;
+      font-family: 'Noto Sans KR', sans-serif;
+      border: none;
+      border-radius: 18px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 16px rgba(255, 107, 157, 0.30);
+    }
+    .predict-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px rgba(255, 107, 157, 0.40);
+    }
+    .predict-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ── 로딩 스피너 ── */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 30px 0;
+      color: #ff6b9d;
+      font-size: 0.9rem;
+    }
+    .spinner {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      border: 3px solid #ffd6e4;
+      border-top-color: #ff6b9d;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── 결과 카드 ── */
+    .result-card {
+      display: none;
+      background: white;
+      border-radius: 22px;
+      padding: 24px 22px;
+      box-shadow: 0 3px 16px rgba(255, 107, 157, 0.09);
+    }
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .result-avatar {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #ff6b9d, #ff91b5);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      color: white;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .result-name {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #ff6b9d;
+    }
+    .result-name small {
+      display: block;
+      font-weight: 400;
+      color: #bbb;
+      font-size: 0.75rem;
+    }
+
+    .result-avatar-photo {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #ff6b9d;
+      flex-shrink: 0;
+    }
+
+    /* 말풍선 스타일 답변 */
+    .answer-bubble {
+      background: #fff0f5;
+      border-radius: 0 18px 18px 18px;
+      padding: 16px 18px;
+      font-size: 0.92rem;
+      color: #444;
+      line-height: 1.8;
+      white-space: pre-wrap;
+      word-break: keep-all;
+    }
+
+    /* 다시하기 버튼 */
+    .retry-btn {
+      display: block;
+      width: 100%;
+      margin-top: 16px;
+      padding: 12px;
+      background: #fff0f5;
+      color: #ff6b9d;
+      border: none;
+      border-radius: 14px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      font-family: 'Noto Sans KR', sans-serif;
+      cursor: pointer;
+    }
+
+    /* ── 에러 메시지 ── */
+    .error-msg {
+      display: none;
+      background: #fff3f3;
+      border: 1px solid #ffb3b3;
+      border-radius: 14px;
+      padding: 14px 18px;
+      font-size: 0.85rem;
+      color: #cc4444;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 뒤로 가기 -->
+  <div class="topbar">
+    <a href="/" class="back-btn">← 홈으로</a>
+  </div>
+
+  <!-- 타이틀 -->
+  <div class="page-title">
+    <h1>💬 {{ profile_name }}{{ profile_name|iramyeon }}?</h1>
+    <p><strong>{{ profile_name }}</strong>에게 하고 싶은 말이나 상담을 입력하면<br>AI가 {{ profile_name }}처럼 답해줄게요!</p>
+  </div>
+
+  <div class="container">
+
+    <!-- 입력 섹션 -->
+    <div class="section">
+      <div class="section-title">📝 {{ profile_name }}에게 하고 싶은 말</div>
+
+      <textarea
+        class="question-input"
+        id="questionInput"
+        placeholder="예: 요즘 진로 때문에 너무 힘들어. 어떻게 하면 좋을 것 같아?"
+        maxlength="500"
+        oninput="updateCharCount(this)"
+      ></textarea>
+      <div class="char-count"><span id="charCount">0</span> / 500</div>
+
+      <!-- 예시 질문 버튼들 -->
+      <p class="example-title">예시 질문 (클릭하면 입력됨)</p>
+      <div class="examples">
+        <button class="example-btn" onclick="setExample(this)">요즘 힘든 일 있어?</button>
+        <button class="example-btn" onclick="setExample(this)">친구 관계가 어려울 때 어떻게 해?</button>
+        <button class="example-btn" onclick="setExample(this)">갑자기 연락 안 하는 친구한테 먼저 연락할 거야?</button>
+        <button class="example-btn" onclick="setExample(this)">나랑 친해지고 싶으면 어떻게 하면 돼?</button>
+        <button class="example-btn" onclick="setExample(this)">좋아하는 사람한테 고백하는 거 어떻게 생각해?</button>
+        <button class="example-btn" onclick="setExample(this)">나 요즘 너무 지쳤어. 위로해줘.</button>
+      </div>
+    </div>
+
+    <!-- 예측 버튼 -->
+    <button class="predict-btn" id="predictBtn" onclick="predictAnswer()">
+      ✨ {{ profile_name }}의 답변 예측하기
+    </button>
+
+    <!-- 로딩 -->
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p>{{ profile_name }}의 답변을 생각 중이에요...</p>
+    </div>
+
+    <!-- 에러 -->
+    <div class="error-msg" id="errorMsg"></div>
+
+    <!-- 결과 카드 -->
+    <div class="result-card" id="resultCard">
+      <div class="result-header">
+        {% if profile_photo %}
+        <img src="{{ url_for('static', filename='uploads/' + profile_photo) }}" class="result-avatar-photo" />
+        {% else %}
+        <div class="result-avatar">{{ profile_name[0] if profile_name else '나' }}</div>
+        {% endif %}
+        <div class="result-name">
+          {{ profile_name }}
+          <small>AI가 예측한 답변이에요 🌸</small>
+        </div>
+      </div>
+      <div class="answer-bubble" id="answerText"></div>
+      <button class="retry-btn" onclick="resetResult()">🔄 다른 질문 해보기</button>
+    </div>
+
+  </div>
+
+  <script>
+    // 글자 수 카운터 업데이트
+    function updateCharCount(el) {
+      document.getElementById('charCount').textContent = el.value.length;
+    }
+
+    // 예시 질문 클릭 시 텍스트 영역에 입력
+    function setExample(btn) {
+      const input = document.getElementById('questionInput');
+      input.value = btn.textContent;
+      updateCharCount(input);
+      input.focus();
+    }
+
+    // 답변 예측 함수
+    async function predictAnswer() {
+      const question = document.getElementById('questionInput').value.trim();
+
+      if (!question) {
+        alert('내용을 입력해주세요! 🌸');
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const res = await fetch('/api/predict-answer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question })
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+          showError(data.error);
+          return;
+        }
+
+        showResult(data.answer);
+
+      } catch (err) {
+        showError('서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    // 결과 표시
+    function showResult(answer) {
+      document.getElementById('answerText').textContent = answer;
+      document.getElementById('resultCard').style.display = 'block';
+      document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // 에러 표시
+    function showError(msg) {
+      const el = document.getElementById('errorMsg');
+      el.textContent = '⚠️ ' + msg;
+      el.style.display = 'block';
+    }
+
+    // 로딩 상태 전환
+    function setLoading(isLoading) {
+      document.getElementById('loading').style.display = isLoading ? 'block' : 'none';
+      document.getElementById('predictBtn').disabled = isLoading;
+      if (isLoading) {
+        document.getElementById('errorMsg').style.display = 'none';
+        document.getElementById('resultCard').style.display = 'none';
+      }
+    }
+
+    // 초기화
+    function resetResult() {
+      document.getElementById('resultCard').style.display = 'none';
+      document.getElementById('questionInput').value = '';
+      document.getElementById('charCount').textContent = '0';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Enter 키(Ctrl+Enter)로 제출
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('questionInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.ctrlKey) predictAnswer();
+      });
+    });
+  </script>
+
+</body>
+</html>
